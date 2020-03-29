@@ -1,5 +1,5 @@
 ---
-title: "BIOL4408 Marine Ecology: Lobster density 4."
+title: "Lobster density - control and impact."
 author: "Tim Langlois and Matt Navarro"
 date: "30/03/2020"
 output: github_document

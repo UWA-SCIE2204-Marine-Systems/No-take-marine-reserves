@@ -1,4 +1,4 @@
-BIOL4408 Marine Ecology: Lobster density 4.
+Lobster density - control and impact.
 ================
 Tim Langlois and Matt Navarro
 30/03/2020
