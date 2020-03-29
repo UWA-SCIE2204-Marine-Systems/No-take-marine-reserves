@@ -75,7 +75,7 @@ those lobster we expect to experience fishing mortality in the fished
 areas.
 
 We are also going to create functions to enable plotting of Standard
-Error on our plots. Please cooy and run these lines
+Error on our plots. Please copy and run these lines
 
 ``` r
 se <- function(x) sd(x) / sqrt(length(x))
@@ -132,19 +132,23 @@ If you want to learn more about ggplot() just Google on StackOverflow
 and other help forums. Also see <http://www.cookbook-r.com/Graphs/> for
 some handy plotting and formatting help.
 
-Now for our data analysis of the **control and impact**.
+## Data analysis
+
+Now for our data analysis of the **control and impact** example data.
 
 The data we are using had many factors, including Year (mulitple years
 of data), Status (fished or no-take), Locations (name of sanctuary to
 which samples are attributed) and Sites (representative sampling sites
 inside and outside the no-take areas). To adequately account for the
 complexity of the spatial and temporal structure and nesting of the data
-would require an analysis beyhond this lab. To find out how to analyses
+would require an analysis beyond this lab. To find out how to analyses
 this data more comprhensively check out the Masters unit BIOL4408 -
-Marine Ecology. In the mean time we will use a simple but instructive
-data analysis to test if there is an overall difference in the number of
-greater than legal sized lobster between the fished and no-take areas
-sampled adjacent to and inside the two sanctuaries of interest.
+Marine Ecology.
+
+In the mean time we will use a simple but instructive data analysis to
+test if there is an overall difference in the number of greater than
+legal sized lobster between the fished and no-take areas sampled
+adjacent to and inside the two sanctuaries of interest.
 
 Again we will use a simple linear model. But this time we will construct
 an Analaysis of Variance between the factors of Status and Sanctuary
