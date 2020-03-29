@@ -1,7 +1,7 @@
 ---
 title: "BIOL4408 Marine Ecology: Lobster density 4."
-author: "TimLanglois"
-date: "09/01/2020"
+author: "Tim Langlois and Matt Navarro"
+date: "30/03/2020"
 output: github_document
 ---
 
@@ -35,29 +35,35 @@ It is interesting to consider, which is the control and which is the impact? Is 
 
 Load extra librarys
 ```{r libs2, message=FALSE, warning=FALSE}
-libray(RCurl) # to read data from GitHub
+library(RCurl) # to read data from GitHub
 library(tidyr) #to tidy data
 library(dplyr) #to transform data
 library(ggplot2) #to plot data
 ```
 
 
-Read in data
+We are going to ask you to you some additional librarys from the [Tidyverse](https://www.tidyverse.org/) family of packages.
+
+In particular we are going to introduce the use of the pipe %>% operator the chain functions together and the ggplot() function to make plots.
+
+For a short introduction to pipes %>% see [Introduction-to-tidyverse-and-pipes](https://github.com/UWA-SBS-Intro-to-R-RStudio-Tidyverse/Introduction-to-tidyverse-and-pipes/blob/master/Using-tidyverse-and-pipes.md).
+
+
+Read in the lobster data from GitHub and glimpse() the first 5 rows and the format of the data
 ```{r read, message=TRUE, warning=FALSE}
 
-dat<-read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/Catch-curve/master/AgeDatWithRecVar.csv"))%>%
+dat<-read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/No-take-marine-reserves/master/lobster.density.csv"))%>%
+  filter(sanctuary%in%c("Armstrong Bay","Green Island"))%>%
+  filter(size.class=="legal")%>%
   glimpse()
 
 ```
 
-
-
-data_var <- read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/Catch-curve/master/AgeDatWithRecVar.csv"))
-
+We have also used filter() to select two of the three no-take marine reserve/sanctuary locations AND only those lobster greater than the minimum size of legal retention. So we are now only looking at data on those lobster we expect to experience fishing mortality in the fished areas.
 
 
 
-Create functions to plotting SE
+We are also going to create functions to enable plotting of Standard Error on our plots. Please copy and run these lines
 ```{r , message=FALSE, warning=FALSE}
 se <- function(x) sd(x) / sqrt(length(x))
 se.min <- function(x) (mean(x)) - se(x) #to make SE min.
@@ -65,126 +71,77 @@ se.max <- function(x) (mean(x)) + se(x) #to make SE max.
 ```
 
 
-Use here() to make a shortcut to the "Data" directory.
-```{r here, message=FALSE, warning=FALSE}
-data.dir <- here("Data")
-
-# or for ecocloud
-#data.dir <- here("workspace","Template-lobster-density","Data")
-```
-
-
-Create a 'Plots' folder if you don't already have one and create a shortcut to it
-```{r , message=FALSE, warning=FALSE}
-dir.create(file.path(here(), "Plots")) #create Plots folder
-
-plots.dir=here("Plots")
-
-# or for ecocloud
-#dir.create(file.path(here(), "workspace","Template-lobster-density","Plots"))
-#plots.dir <- here("workspace","Template-lobster-density","Plots")
-
-```
 
 
 
-## Make mean and SE plot
+## Explore the data using a mean and SE plot of the greater than legal size lobster
 
-Make a mean +/-SE plot with a title.
+Make a mean +/-SE plot.
 Here we use stat_summary() and the functions we made above.
 ```{r}
 
-ggplot(dat%>%filter(size.class=="legal"), aes(x=status, y=count,fill=status)) + 
+ggplot(dat, aes(x=status, y=count,fill=status)) + 
   stat_summary(fun.y=mean, geom="bar") + #add bar at mean
   stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) #add error bars
 
 ```
 
 
+We can make this plot smarter using theme_bw() and titles
+```{r}
+
+status<-ggplot(dat, aes(x=status, y=count,fill=status)) + 
+  stat_summary(fun.y=mean, geom="bar", colour="black") +
+  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
+  # Labels
+  xlab("Marine sanctuary")+
+  ylab(bquote('Density of legal rock lobster (no. /10 m'^2*')'))+
+  ggtitle("Density of legal lobster")+
+  # Apperance
+  theme_bw()
+
+status
+
+```
+
+
 ## Save a plot
-Here we use ggsave(), you can specify the format of the plot, it's size and many other settings. By default it will use the last plot made and set the size of the plot to the size of the plotting window. 
+Here we use ggsave(), you can specify the format of the plot, it's size and many other settings. By default the function will use the last plot made and set the size of the plot to the size of the plotting window. 
+
 ```{r}
 
-ggsave(here("Plots","status.barplot.png"))
+ggsave("status.barplot.png")
 
 ```
 
 
-When you make a plot you can create a plot object and then call this in the ggsave() - we have also added a title
-```{r message=TRUE, warning=TRUE}
-status.barplot <- ggplot(dat%>%filter(size.class=="legal"), aes(x=status, y=count,fill=status)) + 
-  stat_summary(fun.y=mean, geom="bar") + #add bar at mean
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) + #add error bars
-  ggtitle("Legal lobster") #add a title
-status.barplot
+## Keep on plotting
+If you want to learn more about ggplot() just Google on StackOverflow and other help forums.
+Also see http://www.cookbook-r.com/Graphs/ for some handy plotting and formatting help.
+
+
+
+Now for our data analysis of the **control and impact**.
+
+The data we are using had many factors, including Year (mulitple years of data), Status (fished or no-take), Locations (name of sanctuary to which samples are attributed) and Sites (representative sampling sites inside and outside the no-take areas).
+To adequately account for the complexity of the spatial and temporal structure and nesting of the data would require an analysis beyhond this lab. To find out how to analyses this data more comprhensively check out the Masters unit BIOL4408 - Marine Ecology. 
+In the mean time we will use a simple but instructive data analysis to test if there is an overall difference in the number of greater than legal sized lobster between the fished and no-take areas sampled adjacent to and inside the two sanctuaries of interest.
+
+Again we will use a simple linear model. But this time we will construct an Analaysis of Variance between the factors of Status and Sanctuary location.
+
+```{r}
+lobster <- lm(count ~ status*sanctuary, data = dat)
+anova(lobster)
 
 ```
 
-Here we save the plot base on its name.
-This makes life simpler when you are making mulitple plots in a script and want to save them all in one go at the end of the script.
-We can also sett the size of the final plot
-```{r}
-ggsave(here("Plots","status.barplot2.png"),status.barplot)
+There is a strongly significant (P < 0.001) interaction between Status and Sanctuary location.
 
 
-ggsave(here("Plots","status.barplot2.png"),status.barplot,
-       width = 15, height = 8,units = "cm") 
-
-```
-
-
-
-## What's wrong with this code?
-
-ggbarplot.status.size<-ggplot(dat, aes(x=status, y=count,fill=status)) +
-stat_summary(fun.y=mean, geom="bar") +
-stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1)+
-facet_grid(size.class~)
-
-ggbarplot.status.size
-
-
-
-# Very smart plot using Themes
-
-Plotting in R is very customisable. And easy way to style the asethics of your plots in ggplot() is to use  default themes, e.g. theme_bw().
-
-In addition you can develop your own custom theme to augment the default themes.
-Use theme_get() to see available options.
-
-
-## Themes
-
-An example theme to simplify our plots. Use # to experiment turning on and off different options.
-```{r}
-Theme1 <-
-  theme(
-    panel.grid.major = element_blank(), #turns off the major grid lines
-    panel.grid.minor = element_blank(), #turns off the minor grid lines
-    
-    text=element_text(size=14), #sets all text to 14
-    
-    axis.title.x=element_text(vjust=0.3, size=15),
-    axis.title.y=element_text(vjust=0.6, angle=90, size=15),
-    axis.text.y=element_text(size=14),
-    axis.line.x=element_line(colour="black", size=0.5,linetype='solid'),
-    axis.line.y=element_line(colour="black", size=0.5,linetype='solid'),
-    
-    legend.title = element_blank(), #turns off the legend title
-    legend.background = element_blank(), #turns off the legend outline
-    legend.key = element_blank(), # turns off the rectangle around symbols in the legend
-    legend.text = element_text(size=15),
-    legend.position = "top",
-    
-    strip.text.y = element_text(size = 14,angle = 0), #sets size and angle of text in facet strip
-    strip.background = element_blank()) #turns off the facet strip box
-```
-
-
-Mean and +/-SE plot with theme_bw() and custom theme
+We can make a plot to investigate this.
 ```{r}
 
-status.year.sanctuary<-ggplot(dat%>%filter(size.class=="legal"), aes(x=status, y=count,fill=status)) + 
+status.sanctuary<-ggplot(dat, aes(x=status, y=count,fill=status)) + 
   stat_summary(fun.y=mean, geom="bar", colour="black") +
   stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
   # Labels
@@ -193,201 +150,10 @@ status.year.sanctuary<-ggplot(dat%>%filter(size.class=="legal"), aes(x=status, y
   ggtitle("Density of legal lobster")+
   # Apperance
   theme_bw()+
-  Theme1+
-  facet_grid(year~sanctuary)
-status.year.sanctuary
+  facet_grid(.~sanctuary) # to plot by the factor of interest
+
+status.sanctuary
 
 ```
-
-
-Save the plot - change the size to fit all the text in.
-```{r echo=TRUE}
-ggsave(here("Plots","status.barplot.png"),status.year.sanctuary,
-       width = 15, height = 15,units = "cm")
-
-```
-
-
-
-
-
-## Keep on plotting
-If you want to learn more just Google on StackOverflow and other help forums.
-Also see http://www.cookbook-r.com/Graphs/ for some handy plotting and formatting help.
-
-
-# Some more interesting plots
-
-
-All years - Year x Status
-```{r echo=TRUE}
-ggplot(dat%>%filter(size.class=="legal"), aes(x=year, y=count,colour=status)) + 
-  stat_summary(fun.y=mean, geom="point") +
-  stat_summary(fun.y=mean, geom="line") +
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1)+
-  theme_bw()
-```
-
-
-All years - Year x Status
-
-
-```{r echo=TRUE}
-glimpse(dat)
-unique(dat$size.class)
-
-ggplot(dat%>%filter(size.class=="sub.legal"), aes(x=year, y=count,colour=status)) + 
-  stat_summary(fun.y=mean, geom="point") +
-  stat_summary(fun.y=mean, geom="line") +
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1)+
-  theme_bw()
-```
-
-
-
-
-All years - complexity x Sanctuary x Status
-```{r}
-ggplot(dat%>%filter(size.class=="legal"), aes(x=complexity, y=count,colour=status)) + 
-  geom_smooth(method=lm, size=0.5,se=F)+
-  theme_bw()+
-  facet_grid(sanctuary~.)
-```
-
-2020 - Sanctuary x Status
-```{r}
-ggplot(dat%>%filter(size.class=="legal"&year==2020),aes(x=status, y=count,fill=status)) +
-    stat_summary(fun.y=mean, geom="bar", colour="black") +
-    stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
-    facet_grid(.~sanctuary)
-```
-
-
-2020 -  Complexity x Status
-```{r}
- ggplot(dat%>%filter(size.class=="legal"&year==2020), aes(x=complexity, y=count,colour=sanctuary)) + 
-    geom_smooth(method=lm, size=0.5,se=F)+
-    coord_cartesian(ylim = c(0, 0.5), expand = FALSE)+
-  facet_grid(.~status)
-```
-
-
-2020 -  Depth x Status
-```{r}
- ggplot(dat%>%filter(size.class=="legal"&year==2020), aes(x=depth, y=count,colour=sanctuary)) + 
-    geom_smooth(method=lm, size=0.5,se=F)+
-    coord_cartesian(ylim = c(0, 0.5), expand = FALSE)+
-  facet_grid(.~status)
-```
-
-
-## A note on geom_smooth()
-
-A word of caution, geom_smooth() will calculate SE around a fitted model dependent on the method argument in the function.
-This SE is based on model, as specified in the method argument, and is unlikley to be appropriate for the sampling design or data analysis model you have used.
-
-In the case of this example lobster density data, the sampling design involes multiple locations and sites, which may have been analysed with a nested and/or mixed model. Therefore any SE calcualted by the geom_smooth() function will not be correct/appropriate to display.
-  
-  
-2019 -  Complexity x Sanctuary with an incorrect SE
-```{r}
- ggplot(dat%>%filter(size.class=="legal"&year==2019), aes(x=complexity, y=count,colour=sanctuary)) + 
-    geom_smooth(method=lm, size=0.5,se=T)+
-    coord_cartesian(ylim = c(0, 3), expand = FALSE)+
-  ggtitle("incorrect SE")
-```
-
-In this case, the appropriate way to generate a SE would be to model the data using glmer() or equivalent and then use predict() to predict the mean and SE of the fitted model.
-
-No one worries about this with most ANOVA analyses :)
-
-
-
-Go back to [Analysis-lobster-density](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/README.md)
-
-Go forward to [5_lobster-density_format-for-PRIMER](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/5_lobster-density_format-for-PRIMER.md)
-
-
-
-
-
-Armstrong - Sanctuary x Status
-```{r}
-glimpse(dat)
-
-ggplot(dat%>%filter(size.class=="legal"&sanctuary=="Armstrong Bay"),aes(x=year, y=count,colour=status)) +
-    stat_summary(fun.y=mean, geom="point", colour="black") +
-    stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
-    facet_grid(site.new~.)+
-  theme(strip.text.y = element_text(angle=0))
-```
-
-
-
-Armstrong - Sanctuary x Status - with data points
-```{r}
-glimpse(dat)
-
-ggplot(dat%>%filter(size.class=="legal"&sanctuary=="Armstrong Bay"),aes(x=year, y=count,colour=status)) +
-    stat_summary(fun.y=mean, geom="point", colour="black") +
-    stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
-  geom_jitter(alpha=0.25)+
-    facet_grid(site.new~.)+
-  theme(strip.text.y = element_text(angle=0))
-```
-
-
-
-
-
-
-
-
-
-Green - Sanctuary x Status
-```{r}
-glimpse(dat)
-
-ggplot(dat%>%filter(size.class=="legal"&sanctuary=="Green Island"),aes(x=year, y=count,colour=status)) +
-    stat_summary(fun.y=mean, geom="point", colour="black") +
-    stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
-    facet_grid(site.new~.)+
-  theme(strip.text.y = element_text(angle=0))
-```
-
-Parker - Sanctuary x Status
-```{r}
-glimpse(dat)
-
-ggplot(dat%>%filter(size.class=="legal"&sanctuary=="Parker Point"),aes(x=year, y=count,colour=status)) +
-    stat_summary(fun.y=mean, geom="point", colour="black") +
-    stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
-    facet_grid(site.new~.)+
-  theme(strip.text.y = element_text(angle=0))
-```
-
-
-
-all -  Year x Sanctuary with an incorrect SE
-```{r}
- ggplot(dat%>%filter(size.class=="legal"), aes(x=year, y=count,colour=status)) + 
-    geom_smooth(method=lm, size=0.5,se=T)+
-    coord_cartesian(ylim = c(0, 3), expand = FALSE)+
-  ggtitle("incorrect SE")
-```
-
-
-
-
-2018 -  St x Complexity with an incorrect SE
-```{r}
- ggplot(dat%>%filter(size.class=="legal"&year=="2018"), aes(x=complexity, y=count,colour=status)) + 
-    geom_smooth(method=lm, size=0.5,se=T)+
-    # coord_cartesian(ylim = c(0, 3), expand = FALSE)+
-  geom_jitter(alpha=0.25)+
-  ggtitle("incorrect SE")
-```
-
-
 
 
