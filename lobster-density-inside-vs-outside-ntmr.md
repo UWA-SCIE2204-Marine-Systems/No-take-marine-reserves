@@ -3,6 +3,10 @@ Lobster density - control and impact.
 Tim Langlois and Matt Navarro
 30/03/2020
 
+Note: There are 5 questions in this lab exercise. These will form the 5
+multi-choice quiz for the lab. As you work through the lab please record
+your answers to the questions so you can enter them into the quiz later.
+
 For this excercise, we are going to use data on western rock lobster
 that is collected by UWA Marine Science Masters students every year at
 Rottnest Island.
@@ -32,6 +36,7 @@ library(RCurl) # to read data from GitHub
 library(tidyr) #to tidy data
 library(dplyr) #to transform data
 library(ggplot2) #to plot data
+library(lsmeans) #for pairwise comparisons
 ```
 
 We are going to ask you to you some additional librarys from the
@@ -44,64 +49,116 @@ plots.
 For a short introduction to pipes %\>% see
 [Introduction-to-tidyverse-and-pipes](https://github.com/UWA-SBS-Intro-to-R-RStudio-Tidyverse/Introduction-to-tidyverse-and-pipes/blob/master/Using-tidyverse-and-pipes.md).
 
-Read in the lobster data from GitHub and glimpse() the first 5 rows and
-the format of the
-data
-
-``` r
-dat<-read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/No-take-marine-reserves/master/lobster.density.csv"))%>%
-  filter(sanctuary%in%c("Armstrong Bay","Green Island"))%>%
-  filter(size.class=="legal")%>%
-  glimpse()
-```
-
-    ## Observations: 1,511
-    ## Variables: 10
-    ## $ sample.no  <int> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,…
-    ## $ year       <int> 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014, 2014…
-    ## $ date       <fct> 2014-01-26T16:00:00Z, 2014-01-26T16:00:00Z, 2014-01-26T16:…
-    ## $ sanctuary  <fct> Armstrong Bay, Armstrong Bay, Armstrong Bay, Armstrong Bay…
-    ## $ status     <fct> No-take, No-take, No-take, No-take, No-take, No-take, No-t…
-    ## $ site.new   <fct> Armstrong Bay.No-take.Little Armstrong, Armstrong Bay.No-t…
-    ## $ complexity <int> 0, 2, 4, 1, 4, 2, 2, 2, 2, 1, 3, 1, 1, 2, 1, 3, 1, 2, 2, 0…
-    ## $ depth      <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
-    ## $ size.class <fct> legal, legal, legal, legal, legal, legal, legal, legal, le…
-    ## $ count      <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0…
-
-We have also used filter() to select two of the three no-take marine
-reserve/sanctuary locations AND only those lobster greater than the
+Read in the lobster data from GitHub. We will also use filter() to
+select two of the three no-take marine reserve/sanctuary locations
+(Armstrong Bay and Green island) AND only those lobster greater than the
 minimum size of legal retention. So we are now only looking at data on
 those lobster we expect to experience fishing mortality in the fished
 areas.
 
-We are also going to create functions to enable plotting of Standard
-Error on our plots. Please copy and run these lines
+``` r
+dat<-read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/No-take-marine-reserves/master/lobster.density.csv"))%>%
+  filter(sanctuary%in%c("Armstrong Bay","Green Island"))%>%
+  filter(size.class=="legal")
+```
+
+Let’s have a look at the data
 
 ``` r
-se <- function(x) sd(x) / sqrt(length(x))
+head(dat)
+```
+
+    ##   sample.no year                 date     sanctuary  status
+    ## 1         1 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ## 2         2 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ## 3         3 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ## 4         4 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ## 5         5 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ## 6         6 2014 2014-01-26T16:00:00Z Armstrong Bay No-take
+    ##                                 site.new complexity depth size.class count
+    ## 1 Armstrong Bay.No-take.Little Armstrong          0     0      legal     0
+    ## 2 Armstrong Bay.No-take.Little Armstrong          2     0      legal     0
+    ## 3 Armstrong Bay.No-take.Little Armstrong          4     0      legal     0
+    ## 4 Armstrong Bay.No-take.Little Armstrong          1     0      legal     0
+    ## 5 Armstrong Bay.No-take.Little Armstrong          4     0      legal     0
+    ## 6 Armstrong Bay.No-take.Little Armstrong          2     0      legal     0
+
+The data has 10 columns. It also has 1511 rows, each corresponding to a
+snorkel survey.
+
+Lets just focus on two columns for now: - count is how many legal sized
+lobster the BIOL4408 student observed when swimming a 10m2 area at the
+site - status describes whether surveyed site is a “No-take” site or a
+“fished” site
+
+You will notive that R can hold data in a variety of forms. We can
+understand our data a bit better by using the str() function
+
+``` r
+str(dat)
+```
+
+    ## 'data.frame':    1511 obs. of  10 variables:
+    ##  $ sample.no : int  1 2 3 4 5 6 7 8 9 10 ...
+    ##  $ year      : int  2014 2014 2014 2014 2014 2014 2014 2014 2014 2014 ...
+    ##  $ date      : Factor w/ 35 levels "2014-01-23T16:00:00Z",..: 4 4 4 4 4 4 4 4 4 4 ...
+    ##  $ sanctuary : Factor w/ 3 levels "Armstrong Bay",..: 1 1 1 1 1 1 1 1 1 1 ...
+    ##  $ status    : Factor w/ 2 levels "Fished","No-take": 2 2 2 2 2 2 2 2 2 2 ...
+    ##  $ site.new  : Factor w/ 12 levels "Armstrong Bay.Fished.City of York",..: 4 4 4 4 4 4 4 4 4 4 ...
+    ##  $ complexity: int  0 2 4 1 4 2 2 2 2 1 ...
+    ##  $ depth     : num  0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ size.class: Factor w/ 3 levels "all","legal",..: 2 2 2 2 2 2 2 2 2 2 ...
+    ##  $ count     : int  0 0 0 0 0 0 0 0 0 0 ...
+
+Notice that the count variable is being stored in R as an integer (int)
+while the status variable is being stored as a factor with two levels:
+“Fished” and “No-take”. It is often important to understand how R is
+storing your data. There are a wide range of data classess in R
+including integer (count data), numeric (non-whole numbers), character
+(text that is not being used in analysis), factor(text that is being
+used in analysis) and many more.
+
+For now, it makes sense that count is recognised as an integer, and
+status as a factor, so we will leave the data as it is for the analysis.
+
+## Explore the data using a mean and SE plot of the greater than legal size lobster
+
+The first quetion we will ask this data is whether the density of legal
+sized lobster is greater inside the No-take areas compared to the fished
+area?
+
+Lets tackle this question visually by creating a plot of the density of
+legal sized lobster (per 10m2 snorkel survey) in the Fished and No-take
+areas.
+
+To enable plotting of Standard Error on our plots we are going to create
+a few functions. Please copy and run these lines. The first function
+determines the stardard error (se) of a data set using the formula se =
+sd/sqrt(n).
+
+``` r
+se <- function(x) sd(x) / sqrt(length(x)) #get SE
 se.min <- function(x) (mean(x)) - se(x) #to make SE min.
 se.max <- function(x) (mean(x)) + se(x) #to make SE max.
 ```
-
-## Explore the data using a mean and SE plot of the greater than legal size lobster
 
 Make a mean +/-SE plot. Here we use stat\_summary() and the functions we
 made above.
 
 ``` r
 ggplot(dat, aes(x=status, y=count,fill=status)) + 
-  stat_summary(fun.y=mean, geom="bar") + #add bar at mean
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) #add error bars
+  stat_summary(fun=mean, geom="bar") + #add bar at mean
+  stat_summary(fun.min = se.min, fun.max = se.max, geom = "errorbar", width = 0.1) #add error bars
 ```
 
-![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 We can make this plot smarter using theme\_bw() and titles
 
 ``` r
 status<-ggplot(dat, aes(x=status, y=count,fill=status)) + 
-  stat_summary(fun.y=mean, geom="bar", colour="black") +
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
+  stat_summary(fun=mean, geom="bar", colour="black") +
+  stat_summary(fun.min = se.min, fun.max = se.max, geom = "errorbar", width = 0.1) +
   # Labels
   xlab("Marine sanctuary")+
   ylab(bquote('Density of legal rock lobster (no. /10 m'^2*')'))+
@@ -112,7 +169,10 @@ status<-ggplot(dat, aes(x=status, y=count,fill=status)) +
 status
 ```
 
-![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+Q1. What do you think this plot indicates about the difference in
+lobster densities between fished and no-take sites?
 
 ## Save a plot
 
@@ -139,11 +199,12 @@ Now for our data analysis of the **control and impact** example data.
 The data we are using had many factors, including Year (mulitple years
 of data), Status (fished or no-take), Locations (name of sanctuary to
 which samples are attributed) and Sites (representative sampling sites
-inside and outside the no-take areas). To adequately account for the
-complexity of the spatial and temporal structure and nesting of the data
-would require an analysis beyond this lab. To find out how to analyses
-this data more comprhensively check out the Masters unit BIOL4408 -
-Marine Ecology.
+inside and outside the no-take areas).
+
+To adequately account for the complexity of the spatial and temporal
+structure and nesting of the data would require an analysis beyond this
+lab. To find out how to analyses this data more comprhensively check out
+the Masters unit BIOL4408 - Marine Ecology.
 
 In the mean time we will use a simple but instructive data analysis to
 test if there is an overall difference in the number of greater than
@@ -170,15 +231,18 @@ anova(lobster)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-There is a strongly significant (P \< 0.001) interaction between Status
-and Sanctuary location.
+We have 3 variables in this model. - status indicates that Fished and
+No-take sites have different densities - sanctuary indicates that our
+two sites (Armstrong Bay and Green Island) have different lobster
+densities - there is a strongly significant (P \< 0.001) interaction
+between Status and Sanctuary location.
 
-We can make a plot to investigate this.
+To understand what this means lets make a plot.
 
 ``` r
 status.sanctuary<-ggplot(dat, aes(x=status, y=count,fill=status)) + 
-  stat_summary(fun.y=mean, geom="bar", colour="black") +
-  stat_summary(fun.ymin = se.min, fun.ymax = se.max, geom = "errorbar", width = 0.1) +
+  stat_summary(fun=mean, geom="bar", colour="black") +
+  stat_summary(fun.min = se.min, fun.max = se.max, geom = "errorbar", width = 0.1) +
   # Labels
   xlab("Marine sanctuary")+
   ylab(bquote('Density of legal rock lobster (no. /10 m'^2*')'))+
@@ -190,4 +254,59 @@ status.sanctuary<-ggplot(dat, aes(x=status, y=count,fill=status)) +
 status.sanctuary
 ```
 
-![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](lobster-density-inside-vs-outside-ntmr_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+This plot compares lobster density between Fished and No-take areas for
+the two sites (Armstrong and Green Island). We can see that in both
+sites there are more lobster in the No-take areas, but the effect of
+No-take is much greater at Green Island.
+
+We can conduct pairwise comparisons to generate some statistics around
+these differences across sites.
+
+``` r
+emmeans(lobster, pairwise ~ sanctuary*status)$contrasts
+```
+
+    ##  contrast                                     estimate     SE   df t.ratio
+    ##  Armstrong Bay,Fished - Green Island,Fished    -0.0555 0.0692 1507 -0.802 
+    ##  Armstrong Bay,Fished - Armstrong Bay,No-take  -0.1208 0.0795 1507 -1.520 
+    ##  Armstrong Bay,Fished - Green Island,No-take   -0.6837 0.0701 1507 -9.747 
+    ##  Green Island,Fished - Armstrong Bay,No-take   -0.0653 0.0855 1507 -0.763 
+    ##  Green Island,Fished - Green Island,No-take    -0.6282 0.0770 1507 -8.163 
+    ##  Armstrong Bay,No-take - Green Island,No-take  -0.5629 0.0863 1507 -6.523 
+    ##  p.value
+    ##  0.8535 
+    ##  0.4256 
+    ##  <.0001 
+    ##  0.8709 
+    ##  <.0001 
+    ##  <.0001 
+    ## 
+    ## P value adjustment: tukey method for comparing a family of 4 estimates
+
+Q2. What is the estimate comparing the fished and non-fished sites at
+Armstrong Bay?
+
+Q3. Is this value significant?
+
+Q4. What is the estimate comparing the fished and non-fished sites at
+Green Island?
+
+Q5. Is this value significant?
+
+### Wrapping up
+
+Our analysis suggests that no-take areas around rottnest have increased
+the density of lobster. If we recall the life-cycle of the Western Rock
+Lobster (lecture 3 on biological oceanography) this might be surprising.
+Lobster are known to undergo large migrations to spawn - how can a small
+no-take area off Rottnest protect a species that moves around so much?
+Recent studies have suggested that not all lobster undergo this
+migration, and particularly large lobster in unfished locations seem
+pre-disposed to become long-term residents in small spatial areas.
+
+A second conclusion from our study is that no-take areas had a greater
+impact on lobster densities at Green Island relative to Armstrong Bay.
+There are a variety of explanations for why this might be. At present we
+are not sure of the answer. As we learnt in the lecture, you should
+expect the unexpected.
