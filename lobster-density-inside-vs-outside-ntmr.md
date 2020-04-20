@@ -310,3 +310,9 @@ impact on lobster densities at Green Island relative to Armstrong Bay.
 There are a variety of explanations for why this might be. At present we
 are not sure of the answer. As we learnt in the lecture, you should
 expect the unexpected.
+
+### Biological oceanogrpahy in fisheries lab
+
+Now that you have completed this marine reserves lab you should go onto
+the biological oceanography in fisheries lab. You can find it
+[here](https://github.com/UWA-SCIE2204-Marine-Systems/Biological-oceanography/blob/master/Puerulus-settlement.md)
