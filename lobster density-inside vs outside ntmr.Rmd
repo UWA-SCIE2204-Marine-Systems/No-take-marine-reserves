@@ -52,9 +52,9 @@ library(lsmeans) #for pairwise comparisons
 ```
 
 
-We are going to ask you to use some additional functions from the [Tidyverse](https://www.tidyverse.org/) family of packages.
+We are going to ask you to use some new functions.
 
-In particular we are going to introduce the use of the pipe %>% operator the chain functions together and the ggplot() function to make plots.
+In particular we are going to introduce the use of the pipe %>% operator to chain operations together and the ggplot() function to make plots.
 
 For a short introduction to pipes %>% see [Introduction-to-tidyverse-and-pipes](https://github.com/UWA-SBS-Intro-to-R-RStudio-Tidyverse/Introduction-to-tidyverse-and-pipes/blob/master/Using-tidyverse-and-pipes.md).
 

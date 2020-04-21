@@ -49,11 +49,10 @@ library(ggplot2) #to plot data
 library(lsmeans) #for pairwise comparisons
 ```
 
-We are going to ask you to use some additional functions from the
-[Tidyverse](https://www.tidyverse.org/) family of packages.
+We are going to ask you to use some new functions.
 
 In particular we are going to introduce the use of the pipe %\>%
-operator the chain functions together and the ggplot() function to make
+operator to chain operations together and the ggplot() function to make
 plots.
 
 For a short introduction to pipes %\>% see
