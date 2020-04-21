@@ -29,11 +29,21 @@ control vs impact comparison.
 It is interesting to consider, which is the control and which is the
 impact? Is the no-take Marine Reserve a control or impact?
 
-Load extra librarys
+Install and load libraries:
+
+As you are using your own computer you will have to install and load the
+packages we need for this exercise. To install a package: - click on the
+packages tab in the bottom right section of your R studio console. -
+click “install” underneath the packages tab - type in the name of the
+package you want to isntall e.g. RCurl and click install
+
+Once the package is installed you can go ahead and load it by running
+the library() commands below. If this doesn’t seem to work (i) start the
+process again (ii) ask for help.
 
 ``` r
 library(RCurl) # to read data from GitHub
-library(tidyr) #to tidy data
+library(magrittr) #to tidy data
 library(dplyr) #to transform data
 library(ggplot2) #to plot data
 library(lsmeans) #for pairwise comparisons
