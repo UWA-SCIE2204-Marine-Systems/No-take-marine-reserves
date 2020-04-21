@@ -49,7 +49,7 @@ library(ggplot2) #to plot data
 library(lsmeans) #for pairwise comparisons
 ```
 
-We are going to ask you to you some additional librarys from the
+We are going to ask you to use some additional functions from the
 [Tidyverse](https://www.tidyverse.org/) family of packages.
 
 In particular we are going to introduce the use of the pipe %\>%
