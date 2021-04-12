@@ -42,7 +42,7 @@ the library() commands below. If this doesn’t seem to work (i) start the
 process again (ii) ask for help.
 
 ``` r
-library(RCurl) # to read data from GitHub
+library(readr) # to read data from GitHub
 library(magrittr) #to tidy data
 library(dplyr) #to transform data
 library(ggplot2) #to plot data
@@ -66,7 +66,9 @@ those lobster we expect to experience fishing mortality in the fished
 areas.
 
 ``` r
-dat<-read.csv(text=getURL("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/No-take-marine-reserves/master/lobster.density.csv"))%>%
+dat<-as.data.frame(read_csv(url("https://raw.githubusercontent.com/UWA-SCIE2204-Marine-Systems/No-take-marine-reserves/master/lobster.density.csv")))
+
+dat %<>% 
   filter(sanctuary%in%c("Armstrong Bay","Green Island"))%>%
   filter(size.class=="legal")
 ```
